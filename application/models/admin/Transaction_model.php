@@ -263,6 +263,7 @@ class Transaction_model extends CI_Model {
     {
         $sql = "select GROUP_CONCAT(id_transaksi_penjualan ORDER BY id ASC SEPARATOR ', ') AS id_trans, count(id) as count from transaksi_penjualan_header where kelompoktani=$kelompoktani  and tanggal BETWEEN '$tgl_mulai' AND '$tgl_selesai' ";
         return $this->db->query($sql);
+    }
 
     public function create_transaction_penjualan($data)
     {
