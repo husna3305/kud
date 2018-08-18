@@ -1,3 +1,6 @@
+<div class="with-border" style="text-align: right;">
+        <button class="btn btn-primary btn_tambah_konsumenpribadi"><i class="fa fa-plus"></i>&nbsp;&nbsp; Tambah</button>
+      </div><br>
 <table class="table table-bordered table-striped table-condensed table-hover" id="tbl_konsumenpribadi">
 	<thead style="background-color: #87c6ea;color: white;text-align: center;"> 
 		<th style="text-align: center;">Nama</th>
@@ -54,5 +57,9 @@
   		$('#id_konsumenpribadi').val(id_konsumenpribadi);
   		$('#nama_konsumenpribadi').val(nama_konsumenpribadi);
   		$(".modal_cari-konsumenpribadi").modal("hide");
+	})
+
+	$(document).on("click",".btn_pilih_item",function(){
+
 	})
 </script>

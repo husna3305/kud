@@ -154,7 +154,8 @@ class transaksijual extends Admin_Controller {
             'name'      => $barang->nama_barang,
             'kategori'   		=> $kategori_imp,
             'harga_jual_tunai'    => $harga_jual_tunai,
-            'harga_jual_angsur'    => $harga_jual_angsur
+            'harga_jual_angsur'    => $harga_jual_angsur,
+            'insentif'    => 0
         );
         $this->cart1->insert($data);
         $this->load->view('admin/transaksijual/content_daftar_transaksi');
@@ -594,9 +595,12 @@ class transaksijual extends Admin_Controller {
         $data_perpage['tgl_selesai'] = $tgl_selesai;
         $data_perpage['kud'] = $this->Kud_model->get_all();
       	$multi_id_transaksi = $this->Transaction_model->get_multi_id_transaksi_penjualan_bykelompoktani($kelompoktani,$tgl_mulai,$tgl_selesai)->row();
-      	$bykelompoktani = $this->Transaction_model->get_transaksi_bayar_detail_multi_id_transaksi($multi_id_transaksi->id_trans);
-      	$header= $this->Transaction_model->get_by_id_suplier_transaksi_bayar_header($id_suplier,$tgl_mulai,$tgl_selesai);
-
+      	$bykelompoktani = $this->Transaction_model->get_transaksi_penjualan_detail_multi_id_transaksi($multi_id_transaksi->id_trans);
+      	$header= $this->Transaction_model->get_by_kelompoktani_transaksi_penjualan_header($kelompoktani,$tgl_mulai,$tgl_selesai);
+      	foreach ($header->result() as $v) {
+      		echo "$v->id_kelompok";
+      		echo "</br>";
+      	}
         // Jika Data Kosong
          $count_header = count($header->result_array());
          $count_detail_bysuplier = count($bysuplier->result_array());
@@ -930,4 +934,13 @@ class transaksijual extends Admin_Controller {
       }
   }
 
+  public function tambahKonsumenPribadi()
+	{
+		if ( !$this->ion_auth->logged_in()){
+        redirect('auth/login', 'refresh');
+      }else{
+		$this->load->view('admin/transaksijual/content_tambahKonsumenPribadi');
+		//exit;
+	  }
+	}
 }

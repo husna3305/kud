@@ -265,6 +265,29 @@ class Transaction_model extends CI_Model {
         return $this->db->query($sql);
     }
 
+    public function get_transaksi_penjualan_detail_multi_id_transaksi($id_transaksi_belanja)
+    {
+        $id = str_replace(' ','',$id_transaksi_belanja);
+        $id_transaksi_penjualan_expl = explode(',', $id);
+
+        $this->db->join('barang', 'transaksi_penjualan_detail.id_barang = barang.id_barang');
+        $this->db->where_in('id_transaksi_penjualan', $id_transaksi_penjualan_expl);
+        $this->db->order_by("id_transaksi_penjualan", "desc");
+        $query = $this->db->get('transaksi_penjualan_detail');
+        return $query;
+    }
+
+    public function get_by_kelompoktani_transaksi_penjualan_header($kelompoktani,$tgl_mulai,$tgl_selesai)
+    {
+        $sql = "select *,transaksi_penjualan_header.id_transaksi_penjualan as id_trans, transaksi_penjualan_header.kelompoktani as id_kelompok,
+                (select count(id_transaksi_penjualan) from transaksi_penjualan_detail where id_transaksi_penjualan=id_trans) as count_detail
+
+                FROM `transaksi_penjualan_header` 
+                join kelompok_tani on transaksi_penjualan_header.kelompoktani = kelompok_tani.id_kelompok_tani
+                where transaksi_penjualan_header.kelompoktani=$kelompoktani and tanggal BETWEEN '$tgl_mulai' AND '$tgl_selesai' ";
+        return $this->db->query($sql);
+    }
+
     public function create_transaction_penjualan($data)
     {
 
