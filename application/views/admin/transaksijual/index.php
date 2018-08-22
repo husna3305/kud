@@ -615,6 +615,7 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
   // Tambah Barang Ke Daftar Transaksi
   //$('#btn_tambah_barang').click(function(){
   $(document).unbind('click').on("click", "#btn_tambah_barang", function () {
+    $('#loading-status').show();
       var nama_barang       = $('#nama_barang').val();    
       var id_barang       = $('#id_barang').val();    
       var id_stok       = $('#id_stok').val();    
@@ -668,6 +669,7 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
                 $('#jml_belanja').val('');
                 $('#stok_tampil').val('');
                 $("#div_input_data_penjualan").removeClass("disablediv");
+                $('#loading-status').hide();
              }
         });
       }

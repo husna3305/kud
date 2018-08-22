@@ -69,6 +69,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 <?php endif; ?>
     </head>
     <body class="hold-transition skin-blue fixed sidebar-mini">
+      <div id="loading-status">
+   <table>
+      <tr>
+         <td><img src='<?php echo base_url("assets/img/ajax-loader.gif") ?>' /></td>
+         <td>Mohon tunggu...</td>
+      </tr>
+   </table>
+</div>
 <?php if ($mobile === FALSE && $admin_prefs['transition_page'] == TRUE): ?>
         <div class="wrapper animsition">
 <?php else: ?>
@@ -79,3 +87,27 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     border-color: #a94442;
   }
 </style>
+<style type="text/css">
+  #loading-status{
+   position:fixed;
+   top:40%;
+   right:40%;
+   padding:5px 7px;
+
+   -moz-border-radius: 5px; 
+   -webkit-border-radius: 5px;
+   z-index:3000;
+   display:none;
+}
+</style>
+
+
+<script type="text/javascript">
+  $(function(){
+   $("#loading-status").ajaxStart(function(){
+      $(this).show();
+   }).ajaxStop(function(){
+      $(this).hide();
+   });
+});
+</script>

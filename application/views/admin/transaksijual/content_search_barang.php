@@ -39,7 +39,7 @@
         });
 
     });
-	$(document).on("click",".btn_barang",function(){
+	$(document).on("click",".btn_barang",function(event){
 		event.preventDefault();
       var id_barang=$(this).attr('id_barang');
       $.ajax({

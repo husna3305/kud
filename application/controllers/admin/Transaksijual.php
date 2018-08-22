@@ -939,7 +939,29 @@ class transaksijual extends Admin_Controller {
 		if ( !$this->ion_auth->logged_in()){
         redirect('auth/login', 'refresh');
       }else{
-		$this->load->view('admin/transaksijual/content_tambahKonsumenPribadi');
+      	if (!!$this->input->post('nama_konsumenpribadi')) {
+      		$data[1] = array(
+							   'nama_konsumenpribadi' => $this->input->post('nama_konsumenpribadi'),
+							   'alamat' => $this->input->post('alamat'),
+							   'no_telp' => $this->input->post('no_telp'),
+							   'aktif' => 1,
+							   'user_id-add' => $this->ion_auth->user()->row()->id,
+							   'date_created' => date('Y-m-d G:i:s')
+							   );
+		
+		   	if($this->Konsumenpribadi_model->create($data))
+			{
+				$data['konsumenpribadi'] = $this->Konsumenpribadi_model->get_all_aktif();
+				$this->load->view('admin/transaksijual/content_search_konsumenpribadi',$data);
+			}
+			else
+			{
+			  $this->session->set_flashdata('err', "Data Gagal Ditambah");
+			}
+      	}else
+      	{
+			$this->load->view('admin/transaksijual/content_tambahKonsumenPribadi');
+		}
 		//exit;
 	  }
 	}
