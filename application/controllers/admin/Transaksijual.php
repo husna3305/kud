@@ -13,6 +13,7 @@ class transaksijual extends Admin_Controller {
 		$this->load->model('admin/Barang_model');
 		$this->load->model('admin/Suplier_model');
 		$this->load->model('admin/Transaction_model');
+		$this->load->model('admin/Transaction_tmp_model');
 		$this->load->model('admin/Kategori_model');
 		$this->load->model('admin/Kelompok_tani_model');
 		$this->load->model('admin/Konsumenpribadi_model');
@@ -28,7 +29,7 @@ class transaksijual extends Admin_Controller {
 		
 		$this->data['menus_prefs'] = $this->Menus_preferences_model->get_all()->result();
 
-         $this->load->library("cart");
+        $this->load->library("cart");
         $this->load->helper('tgl_indo');
          
 		/* Load Library Cart */
@@ -74,8 +75,20 @@ class transaksijual extends Admin_Controller {
 
 			/* Load Template */
 			$this->data['kategori'] = $this->Kategori_model->get_all_aktif();
+			$this->data['transaksijual_header_tmp'] = $this->Transaction_tmp_model->getAllHeader();
+			$this->data['transaksijual_detail_tmp'] = $this->Transaction_tmp_model->getAllDetail();
 			$this->template->admin_render('admin/transaksijual/index', $this->data);
 		}
+	}
+
+	public function delAllTmp()
+	{
+		if ( !$this->ion_auth->logged_in()){
+        redirect('auth/login', 'refresh');
+      }else{
+		$this->Transaction_tmp_model->delAllTmp();
+		redirect("admin/transaksijual",'refresh');
+	  }
 	}
 
 	public function search_barang()
@@ -130,10 +143,24 @@ class transaksijual extends Admin_Controller {
 
 	public function tampilDaftarTransaksi()
 	{
-		$this->load->view('admin/transaksijual/content_daftar_transaksi');
+		if ( !$this->ion_auth->logged_in()){
+        redirect('auth/login', 'refresh');
+      }else{
+      	$cek_header_transaksi	  = $this->Transaction_tmp_model->getAllHeader()->num_rows();
+      	if ($cek_header_transaksi < 1) {
+      		$data_ins = array('jenis_pembayaran' =>'tunai',
+      						  'jenis_insentif' =>'',
+      						  'status' =>'new',
+      					);
+      		$this->Transaction_tmp_model->InsertHeaderTransaction($data_ins);
+      	}
+ 		$data['detail_transaksi'] = $this->Transaction_tmp_model->getAllDetail();
+		$data['header_transaksi'] = $this->Transaction_tmp_model->getAllHeader();
+		$this->load->view('admin/transaksijual/content_daftar_transaksi',$data);
+	  }
 	}
 
-	public function tambah_barang()
+	public function insertDetail()
     {
       if ( !$this->ion_auth->logged_in()){
         redirect('auth/login', 'refresh');
@@ -141,25 +168,49 @@ class transaksijual extends Admin_Controller {
          $id_barang = $this->input->post('id_barang');
          $id_stok = $this->input->post('id_stok');
          $jml_belanja = $this->input->post('jml_belanja');
-         $barang = $this->Barang_model->get_by_id($id_barang)->row();
          $harga_jual_tunai= $this->input->post('harga_jual_tunai');
          $harga_jual_angsur= $this->input->post('harga_jual_angsur');
-         $kategori = array(0 => $barang->root_kategori, 1=>$barang->nama_kategori );
-         $kategori_imp = implode(',', $kategori);
+
          $data = array(
-            'id'        => $id_stok,
+            'id_stok'        => $id_stok,
             'id_barang'  => $id_barang,
             'qty'       => $jml_belanja,
-            'price'     => $harga_jual_tunai,
-            'name'      => $barang->nama_barang,
-            'kategori'   		=> $kategori_imp,
             'harga_jual_tunai'    => $harga_jual_tunai,
             'harga_jual_angsur'    => $harga_jual_angsur,
-            'insentif'    => 0
+            'insentif'    => 0,
+            'user_id-add' => $this->ion_auth->user()->row()->id,
+			'date_created' => date('Y-m-d G:i:s')
         );
-        $this->cart1->insert($data);
-        $this->load->view('admin/transaksijual/content_daftar_transaksi');
+        $this->Transaction_tmp_model->insertDetail($data);
+        echo "Sukses";
+        exit;
+        //$this->load->view('admin/transaksijual/content_daftar_transaksi');
       }
+    }
+
+    public function updJenisPembayaran()
+    {
+    	if ( !$this->ion_auth->logged_in()){
+        redirect('auth/login', 'refresh');
+      }else{
+      	$check_jenispembayaran = $this->input->post('check_jenispembayaran');
+      	$check_jenisangsuran = $this->input->post('check_jenisangsuran');
+  		// Cek Jenis Pembayaran
+      	if ($check_jenispembayaran=='true') {
+      		$jenis_pembayaran = 'tunai';
+      		$jenis_angsuran = '';
+      	}else{
+      		$jenis_pembayaran = 'angsur';
+      		if ($check_jenisangsuran =='true'){
+      			$jenis_angsuran = 'per_pembayaran';
+      		}elseif ($check_jenisangsuran=='false') {
+      			$jenis_angsuran = 'per_barang';
+      		}
+        }
+      }
+      $this->Transaction_tmp_model->updJenisPembayaran($jenis_pembayaran, $jenis_angsuran);
+      echo "Seukses";
+      exit;
     }
 /*
     public function update_qty()

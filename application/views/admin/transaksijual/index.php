@@ -2,6 +2,44 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 ?>
+
+<?php 
+  if ($transaksijual_header_tmp->num_rows()>0) {
+    $tr = $transaksijual_header_tmp->row();
+    $status = $tr->status;
+    $jenis_insentif = $tr->jenis_insentif;
+    $jenis_pembayaran = $tr->jenis_pembayaran;
+    $jenis_angsuran = $tr->jenis_angsuran;
+  }else
+  {
+    $status=null;
+  }
+  if ($status =='update' OR $transaksijual_detail_tmp->num_rows() >0) { ?>
+    <script type="text/javascript">
+      $(document).ready(function(){
+        swal({
+          title: 'Masih Terdapat Data Yang Belum Disimpan Pada Transaksi Sebelumnya, Apakah Anda Ingin Menghapus Data Transaksi Sebelumnya ?',
+          text: "",
+          type: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Ya',
+          cancelButtonText: 'Tidak',
+          confirmButtonClass: 'btn btn-success',
+          cancelButtonClass: 'btn btn-danger',
+          allowOutsideClick: false,
+          buttonsStyling: false,
+          reverseButtons: false
+        }).then((result) => {
+          if (result.value) {
+            window.location.href="<?php echo site_url('admin/transaksijual/delAllTmp') ?>"
+          }else{
+          }
+        })
+      });
+    </script>
+  <?php } ?>
 <script type="text/javascript">
   $(document).ready(function(){
     $('.priceformat').priceFormat({
@@ -27,6 +65,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
   })
 </script>
+
 <style type="text/css">
   .disablediv{
     //pointer-events: none;
@@ -71,8 +110,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 <label>- Harga Satuan</label>
                 <!--<label class="pull-right" style="font-size: 12px"><a href="#" id="btn_ganti_harga_jual_tunai">Ganti</a></label> -->
                 <input type="text" class="form-control input-group-sm priceformat" style="font-size: 20px;" name="harga_jual_tunai" id="harga_jual_tunai" readonly>
-                <i id="harga_jual_tunai_error" style="display:none;color: red">Tentukan Harga Satuan Terlebih Dahulu</i>
-
               </div>
 
               <div class="form-group">
@@ -101,7 +138,8 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
                 <i id="jml_belanja_error" style="display:none;color: red">Tentukan Jumlah Barang Terlebih Dahulu</i>
 
               </div>
-              <div class="box-footer" align="center"><button name="btn_tambah_barang" type="button" class="btn btn-primary" id="btn_tambah_barang" value="val"><i class="fa fa-plus"></i>&nbsp;&nbsp;Tambah</button>&nbsp;&nbsp;&nbsp;&nbsp;<button type="reset" class="btn btn-warning"><i class="fa fa-undo-alt"></i>&nbsp;&nbsp;Reset</button></div>
+              <div class="box-footer" align="center">
+                <button name="btn_tambah_barang" type="button" class="btn btn-primary" id="btn_tambah_barang" onclick="tambah_barang()"><i class="fa fa-plus"></i>&nbsp;&nbsp;Tambah</button>&nbsp;&nbsp;&nbsp;&nbsp;<button type="reset" class="btn btn-warning"><i class="fa fa-undo-alt"></i>&nbsp;&nbsp;Reset</button></div>
             </form>
           </div>
       </div>
@@ -118,7 +156,7 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
                   <b style="text-align:right;">Jenis Pembayaran</b>                         
                 </label>
                 <div class="col-sm-8">
-                 <input type="checkbox" checked data-toggle="toggle" data-on="Tunai / Cash" data-off="Angsuran" data-onstyle="success" data-offstyle="warning" data-width="130" data-height="33" id="check_jenispembayaran">
+                 <input type="checkbox" <?php if ($jenis_pembayaran=='tunai'){ echo "checked='' "; } ?>         data-toggle="toggle" data-on="Tunai / Cash" data-off="Angsuran" data-onstyle="success" data-offstyle="warning" data-width="130" data-height="33" id="check_jenispembayaran" onchange="UpdJenisPembayaran();setButton();">
                 </div>
               </div>
               <div class="form-group" id="div_jenisangsuran" style="display: none">
@@ -126,7 +164,7 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
                   <b style="text-align:right;">Jenis Angsuran</b>                         
                 </label>
                 <div class="col-sm-8">
-                 <input type="checkbox" checked data-toggle="toggle" data-on="Per Pembayaran" data-off="Per Barang" data-onstyle="success" data-offstyle="warning" data-width="130" data-height="33" id="check_jenisangsuran">
+                 <input type="checkbox" checked data-toggle="toggle" data-on="Per Pembayaran" data-off="Per Barang" data-onstyle="success" data-offstyle="warning" data-width="130" data-height="33" id="check_jenisangsuran" onchange="UpdJenisPembayaran()">
                 </div>
               </div>
 
@@ -328,46 +366,65 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
 
 
 <script type="text/javascript">
+
   $(document).ready(function(){
     $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
 
   })
 
-  // Cek Insentif
-  $(function() {
-    $('#check_insentif').change(function() {
-      if ($('#check_insentif').is(":checked")) {
-        div_sumberinsentif.style.display='block';
-        div_jenisinsentif.style.display = 'block';
-        $('#penambahan_insentif').val('');
-        $('#check_jenisinsentif').bootstrapToggle('on');
-        $('#check_sumberinsentif').bootstrapToggle('on');
-        div_penambahan_insentif.style.display ='block';
-        $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
-      }else{
-        $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
-        div_jenisinsentif.style.display = 'none';
-        div_penambahan_insentif.style.display ='none';
-        div_sumberinsentif.style.display='none';        
-      }
-    })
-    $('#check_jenisinsentif').change(function() {
-      if ($('#check_jenisinsentif').is(":checked")) {
-        $('#penambahan_insentif').val('');
-        div_penambahan_insentif.style.display ='block';
-        $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
-      }else{
-        div_penambahan_insentif.style.display ='none';
-        $('#penambahan_insentif').val('');
+  function setButton()
+  {
+    if ($('#check_jenispembayaran').is(":checked")) {
+        $("#div_penyandangdana").addClass("hide");
+        $("#div_penambahan_biaya_angsuran").addClass("hide");
+        //div_penyandangdana.style.display = 'none';
+        div_jenisangsuran.style.display = 'none';
+        //div_penambahan_biaya_angsuran.style.display = 'none';
+        $('#penambahan_biaya_angsuran_perpembayaran').val('');
+        $('#check_jenisangsuran').bootstrapToggle('on');
+        div_jenisangsuran.style.display = 'none';
         $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');                
+      }else{
+        $("#div_penyandangdana").removeClass("hide");
+        $("#div_penambahan_biaya_angsuran").removeClass("hide");
+        div_jenisangsuran.style.display = 'block';
+        div_penambahan_biaya_angsuran.style.display = 'block';
+        div_penyandangdana.style.display = 'block';
+        $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
       }
-    })
-  })
-  // End Of Cek Insentif
+  }
 
-   // Cek Jenis Pembayaran
-  $(function() {
-    $('#check_jenispembayaran').change(function() {
+  function addUpdTransaksiHeader()
+  {
+    var check_jenispembayaran   = $('#check_jenispembayaran').prop('checked');
+    var check_pembeli           = $('#check_pembeli').prop('checked');
+    var check_jenisangsuran     = $('#check_jenisangsuran').prop('checked');
+    var check_insentif          = $('#check_insentif').prop('checked');
+    var check_jenisinsentif     = $('#check_jenisinsentif').prop('checked');
+    var id_kelompok_tani        = $('#id_kelompok_tani').val();
+    var id_penyandangdana       = $('#id_penyandangdana').val();
+    var total_barang            = parseInt($('#total_barang').val());
+    var penambahan_biaya_angsuran_perpembayaran = parseInt($('#penambahan_biaya_angsuran_perpembayaran').unmask());
+    $.ajax({
+       url:"<?php echo site_url('admin/transaksijual/addUpdTransaksiHeader');?>",
+       type:"POST",
+       data:"id_konsumenpribadi="+id_konsumenpribadi
+            +"&id_kelompok_tani="+id_kelompok_tani 
+            +"&id_penyandangdana="+id_penyandangdana 
+            +"&check_jenispembayaran="+check_jenispembayaran 
+            +"&check_pembeli="+check_pembeli 
+            +"&check_jenisangsuran="+check_jenisangsuran 
+            +"&penambahan_biaya_angsuran_perpembayaran="+penambahan_biaya_angsuran_perpembayaran 
+            +"&tanggal="+tanggal
+            +"&<?php echo $this->security->get_csrf_token_name(); ?>=<?php echo$this->security->get_csrf_hash(); ?>",
+       cache:false,
+       success:function(html){
+          $("#content_transaksijual").html(html);
+       }
+  });
+  }
+
+ /*   $('#check_jenispembayaran').change(function() {
       if ($('#check_jenispembayaran').is(":checked")) {
         $("#div_penyandangdana").addClass("hide");
         $("#div_penambahan_biaya_angsuran").addClass("hide");
@@ -386,62 +443,37 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
         div_penyandangdana.style.display = 'block';
         $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
       }
-    })
-  })
-  // End Of Cek Jenis Pembayaran
+    }) */
 
-  // Cek Jenis Angsuran
-  $(function() {
-    $('#check_jenisangsuran').change(function() {
-      if ($('#check_jenisangsuran').is(":checked")) {
-        div_penyandangdana.style.display = 'block';
-        div_jenisangsuran.style.display = 'block';
-        div_penambahan_biaya_angsuran.style.display = 'block';
-        //show_penjualan.style.display = 'block';
-        //show_penjualan.style.display = 'none';
-        $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');                
-
-       // total_angsuran_perpembayaran.style.display='contents';
-      }else{
-        div_jenisangsuran.style.display = 'block';
-        div_penambahan_biaya_angsuran.style.display = 'none';
-        div_penyandangdana.style.display = 'block';
-        //show_penjualan.style.display = 'none';
-        //show_penjualan.style.display = 'block';
-        $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');                
-
-       // total_angsuran_perpembayaran.style.display='none';
-      }
-    })
-  })
-  // End Of Cek Jenis Angsuran
-
-  $(function() {
-    $('#check_pembeli').change(function() {
-      if ($('#check_pembeli').is(":checked")) {
-        div_pribadi.style.display = 'none';
-        div_kelompoktani.style.display = 'block';
-      }else{
-        div_pribadi.style.display = 'block';
-        div_kelompoktani.style.display = 'none';
-      }
-    })
-  })
-  // End Of Cek Jenis Pembayaran
-
-  // Menghitung Penambahan Angsuran Per Pembayaran
-  $('#penambahan_biaya_angsuran_perpembayaran').keyup(function() {
-      var penambahan_biaya_angsuran = parseInt($('#penambahan_biaya_angsuran_perpembayaran').unmask());
-      var total = parseInt($('#total_pembayaran').val());
-      var hasil = 0;
-      hasil = penambahan_biaya_angsuran + total;
-      if (!penambahan_biaya_angsuran) {
-        $('#hasil_penambahan_biaya_angsuran').text(total);
-      }else{
-        $('#hasil_penambahan_biaya_angsuran').text('Rp. '+hasil);
-      }
-  });
-  // Menghitung Penambahan Angsuran Per Pembayaran
+function UpdJenisPembayaran()
+  { 
+    var check_jenispembayaran       = $('#check_jenispembayaran').prop('checked');
+    var check_jenisangsuran       = $('#check_jenisangsuran').prop('checked');
+    $.ajax({
+       beforeSend: function() { $('#loading-status').show(); },
+       url:"<?php echo site_url('admin/transaksijual/updJenisPembayaran');?>",
+       type:"POST",
+       data:"check_jenispembayaran="+check_jenispembayaran
+           +"&check_jenisangsuran="+check_jenisangsuran 
+            +"&<?php echo $this->security->get_csrf_token_name(); ?>=<?php echo$this->security->get_csrf_hash(); ?>",
+       cache:false,
+       success:function(res){
+          $('#loading-status').hide();
+          $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
+       },
+       complete: function(){
+          $('#loading-status').hide();
+          $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
+       },
+      statusCode: {
+          500: function() {
+            $('#loading-status').hide();
+            swal('Terjadi Kesalahan Saat Menambahkan Data');
+            $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
+          }
+        }
+    });
+  }
 
   // Cek Jumlah Barang Yang Dimaksukkan
   $('#jml_belanja').keyup(function() {
@@ -613,9 +645,8 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
   })
 
   // Tambah Barang Ke Daftar Transaksi
-  //$('#btn_tambah_barang').click(function(){
-  $(document).unbind('click').on("click", "#btn_tambah_barang", function () {
-    $('#loading-status').show();
+  function tambah_barang()
+  {
       var nama_barang       = $('#nama_barang').val();    
       var id_barang       = $('#id_barang').val();    
       var id_stok       = $('#id_stok').val();    
@@ -631,12 +662,6 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
       }
       //End Of Cek Input nama_barang
 
-      // Cek Input harga_jual_tunai
-      if (!harga_jual_tunai) {
-          $("html, body").animate({ scrollTop: 0 }, "fast");$("#harga_jual_tunai").addClass("has-input-error");harga_jual_tunai_error.style.display = 'block';
-        }else{
-          $("#harga_jual_tunai").removeClass("has-input-error");harga_jual_tunai_error.style.display = 'none';
-      }
       //End Of Cek Input harga_jual_tunai
       // Cek Input jml_belanja
       if (!jml_belanja) {
@@ -649,8 +674,10 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
       // Proses Tambah Barang Ke Daftar Transaksi
       if (!!nama_barang & !!harga_jual_angsur & !!harga_jual_tunai & !!jml_belanja)
       {
+        
            $.ajax({
-             url:"<?php echo site_url('admin/transaksijual/tambah_barang');?>",
+             beforeSend: function() { $('#loading-status').show(); },
+             url:"<?php echo site_url('admin/transaksijual/insertDetail');?>",
              type:"POST",
              data:"nama_barang="+nama_barang
                   +"&id_barang="+id_barang 
@@ -670,25 +697,24 @@ yle="display:none;color: red">Tentukan Harga Jual Angsuran Terlebih Dahulu</i>
                 $('#stok_tampil').val('');
                 $("#div_input_data_penjualan").removeClass("disablediv");
                 $('#loading-status').hide();
-             }
+                $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
+             },
+             complete: function(){
+                $('#loading-status').hide();
+                $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
+             },
+            statusCode: {
+                500: function() {
+                  $('#loading-status').hide();
+                  swal('Terjadi Kesalahan Saat Menambahkan Data');
+                  $("#show_daftar_transaksijual").load('<?php echo site_url('admin/transaksijual/tampilDaftarTransaksi') ?>');
+                }
+              }
         });
       }
       // End Of Proses Tambah Barang Ke Daftar Transaksi
 
-  });
-  // End OF Tambah Barang Ke Daftar Transaksi
-  $(document).on("click","#btn_ganti_harga_jual_tunai",function(){
-    event.preventDefault();
-    $text = $("#btn_ganti_harga_jual_tunai").text();
-      if ($text=='Ganti') {
-        $("#harga_jual_tunai").removeAttr("readonly");
-        $("#btn_ganti_harga_jual_tunai").text('Batal');
-      }
-      if ($text=='Batal') {
-        $("#harga_jual_tunai").attr("readonly");
-        $("#btn_ganti_harga_jual_tunai").text('Ganti');
-      }
-  })
+  };
 
   $(document).on("click",".btn_tambah_konsumenpribadi",function(){
     $("#show_konsumenpribadi").load('<?php echo site_url('admin/transaksijual/tambahKonsumenPribadi') ?>');

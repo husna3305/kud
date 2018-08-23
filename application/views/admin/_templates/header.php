@@ -68,7 +68,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
         <![endif]-->
 <?php endif; ?>
     </head>
-    <body class="hold-transition skin-blue fixed sidebar-mini">
+    <body class="hold-transition skin-blue fixed sidebar-mini" onload="setButton()">
       <div id="loading-status">
    <table>
       <tr>

@@ -7,116 +7,88 @@
   }
 </style>
 
-<!--<div id="show_harga_jual_tunai" style="display: block;">
-  <table class="table table-bordered table-hover table-condensed table-striped" >
-  <thead style="font-weight: bold;font-size: 15px;background-color: #5ca1c7;color: white;">
-    <tr>
-      <th style="text-align: center;vertical-align: middle;"><button class="btn btn-link" id="btn_hapus_semua_barang"><i class="fa fa-times" style="color: white"></i></button></th>
-      <th style="text-align: center;vertical-align: middle;width: 40%">Uraian Data Barang</th>
-      <th style="text-align: center;vertical-align: middle;">Qty</th>
-      <th style="text-align: center;vertical-align: middle;">Harga Satuan</th>
-      <th style="text-align: center;vertical-align: middle;">Subtotal</th>
-    </tr>
-  </thead>
-  <tbody>
-      <?php if ($this->cart1->get_content()): ?>
-          <?php foreach ($this->cart1->get_content() as $items): ?>
-        <tr>
-          <td style="vertical-align: middle;text-align: center">
-            <button class="btn btn-link btn_hapus_barang" rowid="<?php echo $items['rowid'] ?>"><i class="fa fa-times"></i></button>
-          </td>
-          <td style="vertical-align: middle;">
-              Nama Barang : <?php echo $items['name'] ?><br>
-              Kategori : <?php echo $items['kategori'] ?>
-            
-          </td>
-          <td style="vertical-align: middle; width: 13%" align="center"><button class="btn btn-info form-control btn_upd_qty" data-id="<?php echo $items['id'] ?>" data-qty="<?php echo $items['qty'] ?>" data-toggle="modal" data-target=".modal_upd_qty"><?php echo $this->cart->format_number($items['qty']); ?></button></td>
-          <td style="vertical-align: middle;text-align: center">Rp.&nbsp;<?php echo $this->cart->format_number($items['harga_jual_tunai']); ?></td>
-          <td style="vertical-align: middle;text-align: center">Rp.&nbsp;<?php echo $this->cart->format_number($items['total']) ?></td>
-        </tr>
-      <?php endforeach ?>
-      <?php endif ?>
-  </tbody>
-    <tfoot style="font-weight: bold;font-size: 15px;background-color: #5ca1c7;color: white;">
-    <tr>
-      <td colspan="2">Total Jumlah Barang</td>
-      <td style="text-align: center;font-size: 18px"><?php echo $this->cart->format_number($this->cart1->total_articles()); ?></td>
-      <td>Total Pembayaran</td><td align="center" style="font-size: 18px">Rp. <?php echo $this->cart->format_number($this->cart1->total_cart()); ?></td>
-    </tr>
-    <tr id="total_angsuran_perpembayaran" style="display: none">
-      <td colspan="4">Total Pembayaran + Penambahan Biaya Angsuran</td>
-      <td><span id="hasil_penambahan_biaya_angsuran" class="priceformat" style="font-size: 19px;text-align: center;vertical-align: middle;"></span></td>
-    </tr>
-  </tfoot>
-</table>
-</div>
--->
-
 <div id="show_penjualan">
+  <?php
+  if ($header_transaksi->num_rows() > 0)
+  {
+      $ht=$header_transaksi->row();
+      $jenis_insentif = $ht->jenis_insentif;
+      $jenis_pembayaran = $ht->jenis_pembayaran;
+      $jenis_angsuran = $ht->jenis_angsuran;
+  } ?>
+
   <table class="table table-bordered table-hover table-condensed table-striped" style="margin-bottom: 5px">
   <thead style="font-weight: bold;font-size: 15px;background-color: #5ca1c7;color: white;">
     <tr>
       <th style="text-align: center;vertical-align: middle;"><button class="btn btn-link" id="btn_hapus_semua_barang"><i class="fa fa-times" style="color: white"></i></button></th>
       <th style="text-align: center;vertical-align: middle;width: 40%">Uraian Data Barang</th>
       <th style="text-align: center;vertical-align: middle;">Qty</th>
-      <th style="text-align: center;vertical-align: middle;" class="harga_tunai hide">Harga Satuan</th>
-      <th style="text-align: center;vertical-align: middle;" class="harga_angsuran hide">Harga Satuan Angsuran</th>
-      <th style="text-align: center;vertical-align: middle;" class="insentif_perbarang hide">Insentif</th>
+      <?php if ($jenis_pembayaran=='tunai'): ?>
+        <th style="text-align: center;vertical-align: middle;">Harga Satuan</th>
+      <?php endif ?>
+      <?php if ($jenis_angsuran =='per_barang' AND $jenis_pembayaran="angsur"): ?>
+        <th style="text-align: center;vertical-align: middle;">Harga Satuan Angsuran</th>
+      <?php endif ?>
+      <?php if ($jenis_angsuran =='per_pembayaran' AND $jenis_pembayaran="angsur"): ?>
+        <th style="text-align: center;vertical-align: middle;">Harga Satuan</th>
+      <?php endif ?>
+
+      <?php if ($jenis_insentif =='per_barang'): ?>
+        <th style="text-align: center;vertical-align: middle;">Insentif</th>
+      <?php endif ?>
       <th style="text-align: center;vertical-align: middle;" class="subtotal ">Subtotal</th>
     </tr>
   </thead>
   <tbody>
-       <?php 
-            $subtotal_tunai=0;
-            $subtotal_angsuran=0;
+    <?php  $total_qty=0;$total_tunai =0; if ($detail_transaksi->num_rows() > 0): ?>
+      <?php foreach ($detail_transaksi->result() as $dt): ?>
+
+          <tr>
+
+            <td style="vertical-align: middle;text-align: center">
+              <button class="btn btn-link btn_hapus_barang" onclick="deleteDetail(<?php echo $dt->id_stok ?>)"><i class="fa fa-times"></i></button>
+            </td>
+
+            <td style="vertical-align: middle;">
+              Nama Barang : <?php echo $dt->nama_barang ?><br>
+              Kategori : <?php echo $dt->root_kategori ?><?php if ($dt->parent<>0): ?>,&bsp;
+                <?php endif ?> <?php echo $dt->nama_kategori ?>
             
-            $total_tunai=0;
-            $total_angsuran=0;
-            $total_tunai_insentifperbang=0;
-            
-            $total_angsuran_insentifperbang=0;
-           ?>
-      <?php if ($this->cart1->get_content()): ?>
-          <?php foreach ($this->cart1->get_content() as $items): ?>
-        <tr>
-          <td style="vertical-align: middle;text-align: center">
-            <button class="btn btn-link btn_hapus_barang" rowid="<?php echo $items['rowid'] ?>"><i class="fa fa-times"></i></button>
-          </td>
-          <td style="vertical-align: middle;">
-              Nama Barang : <?php echo $items['name'] ?><br>
-              Kategori : <?php echo $items['kategori'] ?>
-            
-          </td>
-          <td style="vertical-align: middle; width: 13%" align="center"><button class="btn btn-info form-control btn_upd_qty" data-id="<?php echo $items['id'] ?>" data-qty="<?php echo $items['qty'] ?>" data-toggle="modal" data-target=".modal_upd_qty"><?php echo $this->cart->format_number($items['qty']); ?></button></td>
+            </td>
 
-          <td style="vertical-align: middle;text-align: center" class="harga_tunai hide">Rp.&nbsp;<?php echo $this->cart->format_number($items['harga_jual_tunai']); ?></td>
-          
-          <td style="vertical-align: middle; width: 20%" align="center" class="harga_angsuran hide">
-            <button class="btn btn-info form-control btn_upd_angsuran" data-rowid="<?php echo $items['rowid'] ?>" data-harga_jual_angsur="<?php echo $items['harga_jual_angsur'] ?>" data-toggle="modal" data-target=".modal_upd_harga_jual_angsur"><?php echo $this->cart->format_number($items['harga_jual_angsur']); ?></button>
-          </td>
-           <td style="vertical-align: middle; width: 20%" align="center" class="insentif_perbarang hide">
-            <button class="btn btn-info form-control btn_upd_angsuran insentif_perbarang hide" data-rowid="<?php echo $items['rowid'] ?>" data-harga_jual_angsur="<?php echo $items['harga_jual_angsur'] ?>" data-toggle="modal" data-target=".modal_upd_harga_jual_angsur">s</button>
-          </td>
+            <td style="vertical-align: middle; width: 13%" align="center">
+              <button class="btn btn-info form-control btn_upd_qty" data-id_stok="<?php echo $dt->id_stok ?>" data-qty="<?php echo $dt->qty ?>" data-toggle="modal" data-target=".modal_upd_qty"><?php echo $this->cart->format_number($dt->qty); ?></button>
+            </td>
 
-          <?php $subtotal_tunai = $items['qty']*($items['harga_jual_tunai']+$items['insentif']) ?>
-          <?php $subtotal_angsuran = $items['qty']*($items['harga_jual_angsur']+$items['insentif']) ?>
+            <?php if ($jenis_pembayaran=='tunai'): ?>
+              <td align="center" style="vertical-align: middle;">Rp. <?php echo $this->cart->format_number($dt->harga_jual_tunai) ?></td>
+            <?php endif ?>
+            <?php if ($jenis_pembayaran=='angsur' and $jenis_angsuran=='per_barang'): ?>
+              <td align="center" style="vertical-align: middle;">Rp. <?php echo $this->cart->format_number($dt->harga_jual_angsur) ?></td>
+            <?php endif ?>
+            <?php if ($jenis_angsuran =='per_pembayaran' AND $jenis_pembayaran="angsur"): ?>
+ <td align="center" style="vertical-align: middle;">Rp. <?php echo $this->cart->format_number($dt->harga_jual_tunai) ?></td>
+            <?php endif ?>
 
+            <?php 
+              if ($jenis_pembayaran=='tunai') {
+                  $subtotal = $dt->harga_jual_tunai * $dt->qty;
+              }elseif ($jenis_pembayaran=='angsur' and $jenis_angsuran=='per_barang') {
+                  $subtotal = $dt->harga_jual_angsur * $dt->qty;
+              }elseif($jenis_pembayaran=='tunai' AND $jenis_insentif='per_barang' ){
+                  $subtotal = ($dt->harga_jual_tunai * $dt->qty) - ($dt->insentif*$dt->qty);
+              }elseif($jenis_pembayaran=='angsur' AND $jenis_insentif='per_barang' ){
+                  $subtotal = ($dt->harga_jual_angsur * $dt->qty) - ($dt->insentif*$dt->qty);
+              }
+            ?>
 
-          <td style="vertical-align: middle;text-align: center" class="subtotal_tunai hide">Rp.&nbsp;<?php echo $this->cart->format_number($subtotal_tunai) ?></td>
-
-          <td style="vertical-align: middle;text-align: center" class="subtotal_tunai_insentif_perbarang hide">Rp.&nbsp;<?php echo $this->cart->format_number($subtotal_tunai) ?></td>
-
-          <td style="vertical-align: middle;text-align: center" class="subtotal_angsuran hide">Rp.&nbsp;<?php echo $this->cart->format_number($subtotal_angsuran) ?></td>
-
-          <td style="vertical-align: middle;text-align: center" class="subtotal_angsuranperpembayaran_intensifpembayaran hide">Rp.&nbsp;<?php echo $this->cart->format_number($subtotal_angsuran) ?></td>
-
-
-          <td style="vertical-align: middle;text-align: center" class="subtotal_angsuran_insentif_perbarang hide">Rp.&nbsp;<?php echo $this->cart->format_number($subtotal_angsuran) ?></td>
-        </tr>
-        <?php $total_tunai = $total_tunai+$subtotal_tunai; ?>
-        <?php $total_angsuran = $total_angsuran+$subtotal_angsuran; ?>
+            <td style="text-align: center;vertical-align: middle;">Rp. <?php echo $this->cart->format_number($subtotal); ?></td>
+          </tr>
+          <?php $total_tunai = $subtotal +$total_tunai;
+                $total_qty = $total_qty + $dt->qty;
+          ?>
       <?php endforeach ?>
-      <?php endif ?>
+    <?php endif ?>
   </tbody>
   <!--
     <tfoot style="font-weight: bold;font-size: 15px;background-color: #5ca1c7;color: white;">
@@ -130,38 +102,14 @@
   </tfoot>
 -->
 </table>
+
 <table width="70%" style="min-height: 50px;margin-left: 20px">
   <tr style="font-weight: bold;">
-    <td>Total Jumlah Barang</td><td>:</td><td><?php echo $this->cart->format_number($this->cart1->total_articles()); ?></td>
+    <td>Total Jumlah Barang</td><td>:</td><td><?php echo $this->cart->format_number($total_qty); ?></td>
   </tr>
 
   <tr style="font-weight: bold;" class="total_tunai hide">
-    <td>Total Pembayaran Tunai</td><td>:</td><td><?php echo $this->cart->format_number($total_tunai) ?></td>
-  </tr>
-
-  <tr style="font-weight: bold;" class="total_angsuranperbarang hide">
-    <td>Total Pembayaran Angsuran</td><td>:</td><td><?php echo $this->cart->format_number($total_angsuran) ?></td>
-  </tr>
-  <tr style="font-weight: bold;" class="total_angsuranperpembayaran hide">
-    <td>Total Pembayaran Angsuran</td><td>:</td><td><?php echo $this->cart->format_number($total_angsuran) ?></td>
-  </tr>
-  <tr style="font-weight: bold;" class="total_angsuranperbarang_intensifperbarang hide">
-    <td>Total Pembayaran Angsuran</td><td>:</td><td><?php echo $this->cart->format_number($total_angsuran) ?></td>
-  </tr>
-  <tr style="font-weight: bold;" class="total_angsuranperbarang_intensifpembayaran hide">
-    <td>Total Pembayaran Angsuran Perbarang + Insentif Perpembayaran</td><td>:</td><td><?php echo $this->cart->format_number($total_angsuran) ?></td>
-  </tr>
-  <tr style="font-weight: bold;" class="total_angsuranpembayaran_intensifperbarang hide">
-    <td>Total Pembayaran Angsuran</td><td>:</td><td><?php echo $this->cart->format_number($total_angsuran) ?></td>
-  </tr>
-  <tr style="font-weight: bold;" class="total_angsuranperpembayaran_intensifpembayaran hide">
-    <td>Total Pembayaran Angsuran Perbarang + Insentif Perpembayaran</td><td>:</td><td><?php echo $this->cart->format_number($total_angsuran) ?></td>
-  </tr>
-  <tr style="font-weight: bold;" class="total_tunai_insentifperbarang hide">
-    <td>Total Pembayaran Tunai Insentif Barang</td><td>:</td><td><?php echo $this->cart->format_number($total_tunai_insentifperbang) ?></td>
-  </tr>
-  <tr style="font-weight: bold;" class="total_tunai_insentifperpembayaran hide">
-    <td>Total Pembayaran Tunai Insentif Per Pembayaran</td><td>:</td><td><?php echo $this->cart->format_number($total_tunai_insentifperbang) ?></td>
+    <td>Total Pembayaran</td><td>:</td><td>Rp. <?php echo $this->cart->format_number($total_tunai) ?></td>
   </tr>
 </table>
 
@@ -187,88 +135,10 @@
     </div>
   </div>
 </div>
+
 <!-- End Of Modal Qty -->
-<input type="hidden" name="total_barang" id="total_barang" value="<?php echo $this->cart1->total_articles() ?>">
-
 <script type="text/javascript">
-  $(document).ready(function(){
-    var total_barang = parseInt(<?php echo $this->cart1->total_articles() ?>);
-    // Cek Total Barang
-    if (total_barang==0) {
-      $("#div_input_data_penjualan").addClass("disablediv");
-    }else{
-      $("#div_input_data_penjualan").removeClass("disablediv");
-    }
-    // End Of Cek Total Barang
 
-    // Cek Jenis Pembayaran
-    if ($('#check_jenispembayaran').is(":checked")) 
-    {
-      // Cek Jenis Insentif
-      if ($('#check_insentif').is(":checked"))
-      {
-        if ($('#check_jenisinsentif').is(":checked"))
-        {
-          $(".total_tunai_insentifperpembayaran").removeClass("hide");
-          $(".harga_tunai").removeClass("hide");
-          $(".subtotal_tunai").removeClass("hide");
-
-        }
-        else
-        {
-          $(".total_tunai_insentifperbarang").removeClass("hide");
-          $(".insentif_perbarang").removeClass("hide");
-          $(".harga_tunai").removeClass("hide");
-          $(".subtotal_tunai_insentif_perbarang").removeClass("hide");
-
-        }
-      }
-      else
-      {
-        $(".harga_tunai").removeClass("hide");
-        $(".total_tunai").removeClass("hide");
-        $(".subtotal_tunai").removeClass("hide");
-      }
-      // End Of Cek Jenis Insentif
-    }
-    else
-    {
-      if ($('#check_jenisangsuran').is(":checked"))
-      {
-        // Cek Jenis Insentif
-        if ($('#check_insentif').is(":checked"))
-        {
-          if ($('#check_jenisinsentif').is(":checked"))
-          {
-            $(".total_angsuranperpembayaran_intensifpembayaran").removeClass("hide");
-  
-            $(".subtotal_angsuranperpembayaran_intensifpembayaran").removeClass("hide");
-          }
-          else
-          {
-            $(".total_tunai_insentifperbarang").removeClass("hide");
-            $(".insentif_perbarang").removeClass("hide");
-            $(".harga_tunai").removeClass("hide");
-            $(".subtotal_tunai_insentif_perbarang").removeClass("hide");
-  
-          }
-        }
-        else
-        {
-          $(".harga_angsuran").removeClass("hide");
-          $(".total_angsuranperpembayaran").removeClass("hide");
-          $(".subtotal_angsuran").removeClass("hide");
-
-        }
-        // End Of Cek Jenis Insentif
-      }
-      else
-      {
-        //$(".harga_angsuran").removeClass("hide");
-      }
-    }
-
-   }) 
   $('.btn_hapus_barang').on('click',function(e){
   //$(document).on("click",".btn_hapus_barang",function(){
       var rowid=$(this).attr('rowid');
